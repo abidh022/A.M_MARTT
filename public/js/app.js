@@ -16,7 +16,7 @@ document.getElementById('addProductForm')?.addEventListener('submit', function (
     }
   
     // Make the POST request to add the product
-    fetch('http://localhost:5500/api/products', {
+    fetch('/api/products', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -48,7 +48,7 @@ document.getElementById('addProductForm')?.addEventListener('submit', function (
 // View Products
 window.onload = function() {
     if (window.location.pathname === '/view-products.html') {
-      fetch('http://localhost:5500/api/products')
+      fetch('/api/products')
         .then(res => res.json())  
         .then(data => {
           const productList = document.getElementById('productList').getElementsByTagName('tbody')[0];
@@ -73,7 +73,7 @@ window.onload = function() {
 
 // Function to delete a product
 function deleteProduct(productId) {
-    fetch(`http://localhost:5500/api/products/${productId}`, {
+    fetch(`/api/products/${productId}`, {
       method: 'DELETE',
     })
     .then((res) => res.json())
