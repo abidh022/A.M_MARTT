@@ -38,6 +38,22 @@ async function connectToMongo() {
 // Call the function to connect to MongoDB when the server starts
 connectToMongo();
 
+
+module.exports = async function handler(req, res) {
+    if (req.method === 'GET') {
+    // Get products from the database
+    try {
+      const products = await collection.find({}).toArray();
+      res.status(200).json(products); // Ensure you're sending a JSON response
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      res.status(500).json({ error: "Failed to fetch products" });
+    }
+  } else {
+    res.status(405).json({ error: 'Method Not Allowed' });  // Handle unsupported methods
+  }
+}
+
 // Helper function to fetch all products
 async function getProducts() {
   try {

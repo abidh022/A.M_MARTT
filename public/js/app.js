@@ -45,31 +45,62 @@ document.getElementById('addProductForm')?.addEventListener('submit', function (
   });
 
   
-// View Products
+// // View Products
+// window.onload = function() {
+//     if (window.location.pathname === '/view-products.html') {
+//       fetch('/api/products')
+//         .then(res => res.json())  
+//         .then(data => {
+//           const productList = document.getElementById('productList').getElementsByTagName('tbody')[0];
+//           data.forEach(product => {
+//             console.log(data);
+            
+//             const row = productList.insertRow();
+//             row.insertCell(0).textContent = product.name;
+//             row.insertCell(1).textContent = product.quantity;
+//             row.insertCell(2).textContent = product.price;
+//             row.insertCell(3).textContent = product.receivedDate;
+//             const deleteCell = row.insertCell(4);
+//             deleteCell.innerHTML = `<button class="deleteBtn" onclick="deleteProduct('${product._id}')">Delete</button>`;
+//         });
+//       })
+//       .catch(err => {
+//         console.error("Error fetching products:", err);
+//       });
+//   }
+// };
+  
 window.onload = function() {
-    if (window.location.pathname === '/view-products.html') {
+  if (window.location.pathname === '/view-products.html') {
       fetch('/api/products')
-        .then(res => res.json())  
-        .then(data => {
+      .then(res => {
+          // Log the response body as text to debug what is being returned
+          return res.text().then(text => {
+              console.log("Response text: ", text); // Log the response to inspect it
+              try {
+                  return JSON.parse(text); // Try parsing it as JSON
+              } catch (error) {
+                  throw new Error("Response is not valid JSON");
+              }
+          });
+      })
+      .then(data => {
           const productList = document.getElementById('productList').getElementsByTagName('tbody')[0];
           data.forEach(product => {
-            console.log(data);
-            
-            const row = productList.insertRow();
-            row.insertCell(0).textContent = product.name;
-            row.insertCell(1).textContent = product.quantity;
-            row.insertCell(2).textContent = product.price;
-            row.insertCell(3).textContent = product.receivedDate;
-            const deleteCell = row.insertCell(4);
-            deleteCell.innerHTML = `<button class="deleteBtn" onclick="deleteProduct('${product._id}')">Delete</button>`;
-        });
+              const row = productList.insertRow();
+              row.insertCell(0).textContent = product.name;
+              row.insertCell(1).textContent = product.quantity;
+              row.insertCell(2).textContent = product.price;
+              row.insertCell(3).textContent = product.receivedDate;
+              const deleteCell = row.insertCell(4);
+              deleteCell.innerHTML = `<button class="deleteBtn" onclick="deleteProduct('${product._id}')">Delete</button>`;
+          });
       })
       .catch(err => {
-        console.error("Error fetching products:", err);
+          console.error("Error fetching products:", err);
       });
   }
 };
-  
 
 // Function to delete a product
 function deleteProduct(productId) {
