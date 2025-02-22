@@ -329,9 +329,6 @@ const sellForm = document.getElementById("sellForm");
 const searchBar = document.getElementById("searchBar");
 const stockTableBody = document.querySelector("#stockTable tbody");
 
-const apiUrl = process.env.NODE_ENV === 'production'
-  ? 'https://noorstores.vercel.app/api/products'  // Production URL (Vercel)
-  : 'http://localhost:5500/api/products'; 
 
 // Store products in an array
 let products = [];
@@ -415,14 +412,13 @@ productForm.addEventListener("submit", function(event) {
   };
 
   // Send a POST request to the server to add the product
-  // fetch('/api/products', {
-  //   method: 'POST',
-  //   headers: {
-  //     'Content-Type': 'application/json'
-  //   },
-  //   body: JSON.stringify(productData)
-  // })
-  fetch(apiUrl)
+  fetch('/api/products', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(productData)
+  })
   .then(response => response.json())
   .then(data => {
     console.log('Product added:', data);

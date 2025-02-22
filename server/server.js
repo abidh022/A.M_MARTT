@@ -19,11 +19,6 @@ app.use(express.json());
 app.use(cors());
 app.use(bodyParser.json());
 
-const cors = require('cors');
-app.use(cors({
-  origin: 'https://noorstores.vercel.app'  // Replace with your frontend URL
-}));
-
 // Connect to MongoDB and retrieve the products collection
 async function connectToMongo() {
   try {
@@ -43,7 +38,7 @@ connectToMongo().then(() => {
   // Once the database connection is successful, set up the routes
 
   // Route to fetch all products
-  app.get("https://noorstores.vercel.app/api/products", async (req, res) => {
+  app.get("/api/products", async (req, res) => {
     try {
       const products = await productsCollection.find({}).toArray(); // Fetch products from DB
       res.json(products); // Send products as JSON response
