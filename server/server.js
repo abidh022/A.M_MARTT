@@ -1,303 +1,216 @@
-require('dotenv').config();
-const express = require('express');
-const { MongoClient, ObjectId } = require('mongodb');
-const bodyParser = require('body-parser');
-const cors = require('cors');
-const path = require('path');
+require("dotenv").config();
+const express = require("express");
+const { MongoClient, ObjectId } = require("mongodb");
+const bodyParser = require("body-parser");
+const cors = require("cors");
+const path = require("path");
+
+const URI = process.env.MONGODB_URI;
+const client = new MongoClient(URI);
+
+let productsCollection;
 
 // Initialize express app
 const app = express();
 const port = process.env.PORT || 5500;
 
-// Middleware
+// Use express JSON middleware
+app.use(express.json());
 app.use(cors());
 app.use(bodyParser.json());
 
-// MongoDB Atlas connection string
-const uri = process.env.MONGODB_URI;
-const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-
-// Database and collection references
-let db;
-let collection;
-
+// Connect to MongoDB and retrieve the products collection
 async function connectToMongo() {
   try {
-    await client.connect(); // Establish MongoDB connection
+    await client.connect();
     console.log("Connected to MongoDB!");
-    
-    db = client.db("inventory"); // Set your database name here
-    collection = db.collection("stock"); // Set your collection name here
+    const db = client.db("inventory"); // Database name (change as needed)
+    productsCollection = db.collection("stock"); // Collection name (change as needed)
 
   } catch (error) {
     console.error("Error connecting to MongoDB:", error);
-    process.exit(1); // Exit process if the connection fails
+    process.exit(1); // Exit the process if MongoDB connection fails
   }
 }
 
-// Call the function to connect to MongoDB when the server starts
-connectToMongo();
+// Connect to MongoDB before starting the Express server
+connectToMongo().then(() => {
+  // Once the database connection is successful, set up the routes
 
-
-module.exports = async function handler(req, res) {
-    if (req.method === 'GET') {
-    // Get products from the database
+  // Route to fetch all products
+  app.get("/api/products", async (req, res) => {
     try {
-      const products = await collection.find({}).toArray();
-      res.status(200).json(products); // Ensure you're sending a JSON response
+      const products = await productsCollection.find({}).toArray(); // Fetch products from DB
+      res.json(products); // Send products as JSON response
     } catch (error) {
-      console.error('Error fetching products:', error);
+      console.error("Error fetching products:", error);
       res.status(500).json({ error: "Failed to fetch products" });
     }
-  } else {
-    res.status(405).json({ error: 'Method Not Allowed' });  // Handle unsupported methods
-  }
-}
+  });
 
-// Helper function to fetch all products
-async function getProducts() {
-  try {
-    const products = await collection.find({}).toArray();
-    return products;
-  } catch (error) {
-    console.error("Error fetching products:", error);
-    return [];
-  }
-}
+  // Route to delete a product
+  app.delete("/api/products/:id", async (req, res) => {
+    const { id } = req.params;
 
-// Helper function to add a product
-async function addProduct(product) {
+    try {
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).json({ error: "Invalid product ID" });
+      }
+
+      const result = await productsCollection.deleteOne({ _id: new ObjectId(id) });
+
+      if (result.deletedCount === 0) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+
+      res.status(200).json({ message: "Product deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      res.status(500).json({ error: "Failed to delete product" });
+    }
+  });
+
+  // Serve static files (HTML, CSS, JS files)
+  app.use(express.static(path.join(__dirname, "../public")));
+
+  app.get("/", (req, res) => {
+    res.send("Welcome to the Stock API!");
+  });
+  
+
+  // Start the server after successfully connecting to MongoDB
+  app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+  });
+});
+
+// Route to add a new product
+app.post("/api/products", async (req, res) => {
+  const { productName, quantity, purchasePrice, sellingPrice, receivedDate } = req.body;
+
   try {
-    const result = await collection.insertOne(product);
-    // Return the inserted product with the insertedId
-    return { ...product, _id: result.insertedId };  // Attach the insertedId to the product
+    // Create new product object
+    const newProduct = {
+      productName,
+      quantity,
+      purchasePrice,
+      sellingPrice,
+      receivedDate: new Date(receivedDate || Date.now()).toISOString(), // Default to today if no date
+    };
+
+    // Insert the product into MongoDB
+    const result = await productsCollection.insertOne(newProduct);
+
+    // Check if insertion was successful
+    if (result.acknowledged) {
+      // Return the inserted product, including the newly generated _id
+      const insertedProduct = { ...newProduct, _id: result.insertedId };
+      res.status(201).json(insertedProduct); // Respond with the added product
+    } else {
+      res.status(500).json({ error: "Failed to add product" });
+    }
   } catch (error) {
     console.error("Error adding product:", error);
-    throw new Error("Failed to add product");
-  }
-}
-
-// Helper function to update a product
-async function updateProduct(id, updatedProduct) {
-  try {
-    const result = await collection.updateOne(
-      { _id: new MongoClient.ObjectId(id) },  // Use ObjectId for MongoDB primary key
-      { $set: updatedProduct }
-    );
-    return result.modifiedCount > 0;  // Returns true if update was successful
-  } catch (error) {
-    console.error("Error updating product:", error);
-    throw new Error("Failed to update product");
-  }
-}
-
-// Helper function to delete a product
-async function deleteProduct(id) {
-  try {
-    // Use ObjectId to convert the string id into a valid ObjectId
-    const result = await collection.deleteOne({ _id: new ObjectId(id) });
-    return result.deletedCount > 0;  // Returns true if the product was deleted
-  } catch (error) {
-    console.error("Error deleting product:", error);
-    throw new Error("Failed to delete product");
-  }
-}
-// Serve static files (the HTML, CSS, JS files in the "public" directory)
-app.use(express.static(path.join(__dirname, '../public')));
-
-// Serve the homepage route
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/index.html'));
-});
-
-// API endpoint to fetch all products
-app.get('/api/products', async (req, res) => {
-  try {
-    const products = await getProducts();
-    res.json(products);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch products" });
-  }
-});
-
-// API endpoint to add a product
-app.post('/api/products', async (req, res) => {
-  try {
-    const newProduct = req.body;
-    const addedProduct = await addProduct(newProduct);
-    res.status(201).json(addedProduct);
-  } catch (error) {
     res.status(500).json({ error: "Failed to add product" });
   }
 });
 
-// API endpoint to update a product
-app.put('/api/products/:id', async (req, res) => {
+app.put("/api/products/:id", async (req, res) => {
+  const { id } = req.params;
+  const { quantity } = req.body;
+
   try {
-    const { id } = req.params;
-    const updatedProduct = req.body;
-    const success = await updateProduct(id, updatedProduct);
-    if (success) {
-      res.json({ message: "Product updated successfully" });
-    } else {
-      res.status(404).json({ error: "Product not found" });
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "Invalid product ID" });
     }
+
+    // Find the product and update its quantity
+    const result = await productsCollection.updateOne(
+      { _id: new ObjectId(id) },
+      { $inc: { quantity: quantity } }  // Increment by quantity provided
+    );
+
+    if (result.modifiedCount === 0) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    // Fetch the updated product from the database
+    const updatedProduct = await productsCollection.findOne({ _id: new ObjectId(id) });
+
+    res.status(200).json(updatedProduct); // Send back the updated product
   } catch (error) {
+    console.error("Error updating product:", error);
     res.status(500).json({ error: "Failed to update product" });
   }
 });
 
-// API endpoint to delete a product
-app.delete('/api/products/:id', async (req, res) => {
+// // Route to update product quantity
+// app.put("/api/products/:id", async (req, res) => {
+//   const { id } = req.params;
+//   const { quantity } = req.body;
+
+//   try {
+//     if (!ObjectId.isValid(id)) {
+//       return res.status(400).json({ error: "Invalid product ID" });
+//     }
+
+//     // Find the product and update its quantity
+//     const result = await productsCollection.updateOne(
+//       { _id: new ObjectId(id) },
+//       { $inc: { quantity: quantity } }  // Increment by quantity provided
+//     );
+
+//     if (result.modifiedCount === 0) {
+//       return res.status(404).json({ error: "Product not found" });
+//     }
+
+//     res.status(200).json({ message: "Product quantity updated" });
+//   } catch (error) {
+//     console.error("Error updating product:", error);
+//     res.status(500).json({ error: "Failed to update product" });
+//   }
+// });
+
+
+// Route to sell product (decrease quantity)
+app.put("/api/products/sell/:id", async (req, res) => {
+  const { id } = req.params;
+  const { soldQuantity } = req.body;
+
   try {
-    const { id } = req.params;
-    const success = await deleteProduct(id);
-    if (success) {
-      res.json({ message: "Product deleted successfully" });
-    } else {
-      res.status(404).json({ error: "Product not found" });
+    // Validate the product ID
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "Invalid product ID" });
     }
+
+    // Find the product
+    const product = await productsCollection.findOne({ _id: new ObjectId(id) });
+
+    // If product not found, return 404
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    // Check if enough stock is available
+    if (product.quantity < soldQuantity) {
+      return res.status(400).json({ error: "Not enough stock to sell" });
+    }
+
+    // Decrease the quantity by soldQuantity
+    const result = await productsCollection.updateOne(
+      { _id: new ObjectId(id) },
+      { $inc: { quantity: -soldQuantity } }  // Decrement quantity by soldQuantity
+    );
+
+    if (result.modifiedCount === 0) {
+      return res.status(404).json({ error: "Product not found or no changes made" });
+    }
+
+    // Return success message
+    res.status(200).json({ message: "Product sold successfully" });
   } catch (error) {
-    res.status(500).json({ error: "Failed to delete product" });
+    console.error("Error selling product:", error);
+    res.status(500).json({ error: "Failed to sell product" });
   }
 });
-
-// Start the server
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
-
-
-
-// require('dotenv').config(); 
-// const express = require('express');
-// const { MongoClient } = require('mongodb');  // Import MongoClient from 'mongodb'
-// const bodyParser = require('body-parser');
-// const cors = require('cors');
-// const path = require('path');
-
-// // Initialize express app
-// const app = express();
-// const port = process.env.PORT || 5500;
-
-
-// // Middleware
-// app.use(cors());
-// app.use(bodyParser.json());
-
-// // MongoDB Atlas connection string (replace with your credentials)
-// const uri = process.env.MONGODB_URI;
-// const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-
-
-// async function connectToMongo() {
-//   try {
-//     await client.connect();  // Establish MongoDB connection
-//     console.log("Connected to MongoDB!");
-//   } catch (error) {
-//     console.error("Error connecting to MongoDB:", error);
-//     process.exit(1);  // Exit process if the connection fails
-//   }
-// }
-// connectToMongo();
-
-// // Serve static files (the HTML, CSS, JS files in the "public" directory)
-// app.use(express.static(path.join(__dirname, '../public')));
-
-// // Serve the homepage route
-// app.get('/', (req, res) => {
-//   res.sendFile(path.join(__dirname, '../public/index.html'));
-// });
-
-
-
-// async function getDbData() {
-//   try {
-//     await client.connect();
-//     console.log("Connected to MongoDB!");
-
-//     const db = client.db("inventory");  // Replace with your database name
-//     const collection = db.collection("stock");  // Replace with your collection name
-//     const data = await collection.find({}).toArray();  // Fetch all documents
-
-//     console.log("Fetched Data:", data);  // Log the fetched data for debugging
-//     return data;
-//   } catch (error) {
-//     console.error("Error connecting to MongoDB:", error);  // Detailed error message
-//     return [];
-//   } finally {
-//     await client.close();  // Close the connection after operation
-//   }
-// }
-
-// // Call the function for testing
-// getDbData().then(data => {
-//   console.log("Data from DB:", data);
-// });
-
-// app.get('/api/products', async (req, res) => {
-//   const products = await getDbData();
-//   res.json(products);
-// });
-
-// // Start the server
-// app.listen(port, () => {
-//   console.log(`Server running on port ${port}`);
-// });
-
-// app.post('/api/add-product', async (req, res) => {
-//   try {
-//     const product = req.body;
-    
-//     // Validate the received data
-//     if (!product.name || !product.quantity || !product.price || !product.receivedDate) {
-//       return res.status(400).json({ error: 'All fields are required' });
-//     }
-
-//     // Insert product into MongoDB
-//     const db = client.db("inventory"); // replace with your DB name
-//     const collection = db.collection("stock"); // replace with your collection name
-//     const result = await collection.insertOne(product);
-
-//     // Return the inserted product data
-//     res.status(201).json(result.ops[0]); // Respond with the inserted product
-//   } catch (error) {
-//     console.error("Error adding product:", error);
-//     res.status(500).json({ error: 'Failed to add product' });
-//   }
-// });
-
-// // Route to get all products from the database
-
-
-// app.post('/api/add-product', async (req, res) => {
-//   try {
-//     const product = req.body;
-    
-//     // Validate the received data
-//     if (!product.name || !product.quantity || !product.price || !product.receivedDate) {
-//       return res.status(400).json({ error: 'All fields are required' });
-//     }
-
-//     // Check if connection is still open
-//     if (!client.isConnected()) {
-//       return res.status(500).json({ error: 'MongoDB client not connected' });
-//     }
-
-//     // Insert product into MongoDB
-//     const db = client.db("inventory");  // replace with your DB name
-//     const collection = db.collection("stock");  // replace with your collection name
-//     const result = await collection.insertOne(product);
-
-//     console.log('Product inserted:', result.ops[0]);  // Log the inserted product for debugging
-
-//     // Return the inserted product data
-//     res.status(201).json(result.ops[0]); // Respond with the inserted product
-//   } catch (error) {
-//     console.error("Error adding product:", error);  // Log the error details
-//     res.status(500).json({ error: 'Failed to add product' });
-//   }
-// });
-
-
 
