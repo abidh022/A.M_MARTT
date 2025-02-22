@@ -38,7 +38,7 @@ connectToMongo().then(() => {
   // Once the database connection is successful, set up the routes
 
   // Route to fetch all products
-  app.get("/api/products", async (req, res) => {
+  app.get("https://noorstores.vercel.app/api/products", async (req, res) => {
     try {
       const products = await productsCollection.find({}).toArray(); // Fetch products from DB
       res.json(products); // Send products as JSON response
