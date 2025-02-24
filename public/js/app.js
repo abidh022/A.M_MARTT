@@ -537,20 +537,21 @@ function deleteProduct(id) {
   }
 }
 
-function fetchProducts() {
-  fetch('/api/products') // Get products from server
-    .then(response => response.json())
-    .then(data => {
-      products = data; // Store products from server
-      filteredProducts = data;  // Initially, display all products
+async function fetchProducts() {
+  try {
+    const response = await fetch('/api/products'); // Wait for the server response
+    const data = await response.json(); // Wait for the response to be parsed as JSON
 
-      updateTable(filteredProducts); // Display all products initially
-    })
-    .catch(error => {
-      console.error("Error fetching products:", error);
-      alert('Failed to fetch products.');
-    });
+    products = data; // Store products from server
+    filteredProducts = data;  // Initially, display all products
+
+    updateTable(filteredProducts); // Display all products initially
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    alert('Failed to fetch products.');
+  }
 }
+
 
 // Update the table with all or filtered products
 function updateTable(filteredProducts = null) {
