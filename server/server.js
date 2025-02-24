@@ -20,16 +20,27 @@
 // app.use(bodyParser.json());
 
 // // Connect to MongoDB and retrieve the products collection
+// // async function connectToMongo() {
+// //   try {
+// //     await client.connect();
+// //     console.log("Connected to MongoDB!");
+// //     const db = client.db("inventory"); // Database name (change as needed)
+// //     productsCollection = db.collection("stock"); // Collection name (change as needed)
+
+// //   } catch (error) {
+// //     console.error("Error connecting to MongoDB:", error);
+// //     process.exit(1); // Exit the process if MongoDB connection fails
+// //   }
+// // }
 // async function connectToMongo() {
 //   try {
 //     await client.connect();
 //     console.log("Connected to MongoDB!");
 //     const db = client.db("inventory"); // Database name (change as needed)
 //     productsCollection = db.collection("stock"); // Collection name (change as needed)
-
 //   } catch (error) {
 //     console.error("Error connecting to MongoDB:", error);
-//     process.exit(1); // Exit the process if MongoDB connection fails
+//     throw error; // Rethrow error to be caught by caller
 //   }
 // }
 
@@ -212,7 +223,7 @@ async function connectToMongo() {
     productsCollection = db.collection("stock"); // Collection name (change as needed)
   } catch (error) {
     console.error("Error connecting to MongoDB:", error);
-    throw error; // Rethrow error to be caught by caller
+    process.exit(1); // Exit the process if MongoDB connection fails
   }
 }
 
