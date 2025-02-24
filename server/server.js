@@ -35,8 +35,9 @@ async function connectToMongo() {
 
 // Connect to MongoDB before starting the Express server
 connectToMongo().then(() => {
-  // Once the database connection is successful, set up the routes
-
+  // Once the base connection is successful, set up the routes
+  console.log("abidh");
+  
   // Route to fetch all products
   app.get("/api/products", async (req, res) => {
     try {
