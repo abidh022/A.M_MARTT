@@ -472,14 +472,11 @@ app.get("/", (req, res) => {
 // API route to fetch all products from the database
 app.get("/api/products", async (req, res) => {
   try {
-    const products = await productsCollection.find({}).toArray(); // Fetch all products from 'stock' collection
-    if (!products || products.length === 0) {
-      return res.status(404).json({ error: "No products found" }); // If no products, return an error
-    }
-    res.json(products); // Send the products as a JSON response
+    const products = await productsCollection.find({}).toArray();
+    res.json(products); // Send the fetched products as JSON
   } catch (error) {
-    console.error("Error fetching products:", error); // Log any errors
-    res.status(500).json({ error: "Failed to fetch products" }); // Respond with error message
+    console.error("Error fetching products:", error);
+    res.status(500).json({ error: "Failed to fetch products" });
   }
 });
 

@@ -536,24 +536,17 @@ function deleteProduct(id) {
     });
   }
 }
-
 async function fetchProducts() {
   try {
-    const response = await fetch('/api/products'); // Get the products from the API
-
-    if (!response.ok) { // Check if the response was successful
+    const response = await fetch('/api/products'); // Make sure this matches the backend route
+    if (!response.ok) { // Handle HTTP errors
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const data = await response.json(); // Parse response as JSON
-
-    if (!Array.isArray(data)) {
-      throw new Error("Invalid data format received");
-    }
-
-    products = data; // Store products from server
-    filteredProducts = data;  // Initially, display all products
-    updateTable(filteredProducts); // Update table with products
+    const data = await response.json(); // Parse the response as JSON
+    products = data; // Store products from the server
+    filteredProducts = data; // Initially, display all products
+    updateTable(filteredProducts); // Update the table to show all products
   } catch (error) {
     console.error("Error fetching products:", error);
     alert('Failed to fetch products.');
