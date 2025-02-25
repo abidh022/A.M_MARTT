@@ -350,12 +350,83 @@
 //   console.log(`Server listening at http://localhost:${port}`);
 // });
 
-require("dotenv").config(); // To load environment variables from .env file
-const express = require("express"); // Express framework
-const { MongoClient, ObjectId } = require("mongodb"); // MongoDB client and ObjectId
+// require("dotenv").config(); // To load environment variables from .env file
+// const express = require("express"); // Express framework
+// const { MongoClient, ObjectId } = require("mongodb"); // MongoDB client and ObjectId
+// const path = require("path");
+
+// // MongoDB URI from environment variables
+// const URI = process.env.MONGODB_URI;
+// const client = new MongoClient(URI); // MongoClient instance
+
+// let productsCollection; // To store the MongoDB collection reference
+
+// // Create the app instance first
+// const app = express();
+
+// // MongoDB connection function
+// async function connectToMongo() {
+//   try {
+//     await client.connect(); // Connect to MongoDB
+//     console.log("Connected to MongoDB!"); // Log success message
+//     const db = client.db("inventory"); // Access the 'inventory' database
+//     productsCollection = db.collection("stock"); // Reference the 'stock' collection
+//   } catch (error) {
+//     console.error("Error connecting to MongoDB:", error); // Log any errors
+//     throw error; // Rethrow the error if connection fails
+//   }
+// }
+
+// // Middleware to check MongoDB connection before handling any requests
+// app.use(async (req, res, next) => {
+//   try {
+//     if (!productsCollection) {
+//       await connectToMongo();  // Ensure connection is established before any route
+//     }
+//     next(); // Continue to the route handler if MongoDB connection is ready
+//   } catch (error) {
+//     res.status(500).json({ error: "MongoDB connection failed" }); // Respond with error if MongoDB connection fails
+//   }
+// });
+
+// // app.use(express.static(path.join(__dirname, "..public")));
+// app.use(express.static(path.join(__dirname, "../public")));
+
+// // Add a route to explicitly serve index.html for the root URL
+// app.get("/", (req, res) => {
+//   res.sendFile(path.join(__dirname, "public", "index.html"));
+// });
+
+
+// // API route to fetch all products from the database
+// app.get("/api/products", async (req, res) => {
+//   try {
+//     const products = await productsCollection.find({}).toArray(); // Fetch all products from 'stock' collection
+//     res.json(products); // Send the products as a JSON response
+//   } catch (error) {
+//     console.error("Error fetching products:", error); // Log any errors
+//     res.status(500).json({ error: "Failed to fetch products" }); // Respond with error message
+//   }
+// });
+
+// app.get("/", (req, res) => {
+//   res.send("Server is running!"); // Send a message indicating the server is working
+// });
+
+
+// // Set up the Express server to listen on port 5500
+// const port = 5500;
+// app.listen(port, () => {
+//   console.log(`Server listening at http://localhost:${port}`); // Log the server URL
+// });
+
+
+
+require("dotenv").config();
+const express = require("express");
+const { MongoClient, ObjectId } = require("mongodb");
 const path = require("path");
 
-// MongoDB URI from environment variables
 const URI = process.env.MONGODB_URI;
 const client = new MongoClient(URI); // MongoClient instance
 
@@ -385,34 +456,32 @@ app.use(async (req, res, next) => {
     }
     next(); // Continue to the route handler if MongoDB connection is ready
   } catch (error) {
-    res.status(500).json({ error: "MongoDB connection failed" }); // Respond with error if MongoDB connection fails
+    console.error("MongoDB connection failed:", error); // Log the error
+    res.status(500).json({ error: "MongoDB connection failed" }); // Send a meaningful error message
   }
 });
 
-// app.use(express.static(path.join(__dirname, "..public")));
-app.use(express.static(path.join(__dirname, "../public")));
+// Serve static files (index.html and other assets) from the "public" directory
+ app.use(express.static(path.join(__dirname, "../public")));
 
 // Add a route to explicitly serve index.html for the root URL
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-
 // API route to fetch all products from the database
 app.get("/api/products", async (req, res) => {
   try {
     const products = await productsCollection.find({}).toArray(); // Fetch all products from 'stock' collection
+    if (!products || products.length === 0) {
+      return res.status(404).json({ error: "No products found" }); // If no products, return an error
+    }
     res.json(products); // Send the products as a JSON response
   } catch (error) {
     console.error("Error fetching products:", error); // Log any errors
     res.status(500).json({ error: "Failed to fetch products" }); // Respond with error message
   }
 });
-
-app.get("/", (req, res) => {
-  res.send("Server is running!"); // Send a message indicating the server is working
-});
-
 
 // Set up the Express server to listen on port 5500
 const port = 5500;
