@@ -34,7 +34,7 @@ connectToMongo().then(() => {
   // Once the base connection is successful, set up the routes
 
   // Route to fetch all products
-  app.get("/api/products", async (req, res) => {
+  app.get("/products", async (req, res) => {
     try {
       const products = await productsCollection.find({}).toArray(); // Fetch products from DB
       res.json(products); // Send products as JSON response
@@ -45,7 +45,7 @@ connectToMongo().then(() => {
   });
 
   // Route to delete a product
-  app.delete("/api/products/:id", async (req, res) => {
+  app.delete("/products/:id", async (req, res) => {
     const { id } = req.params;
 
     try {
@@ -74,7 +74,7 @@ connectToMongo().then(() => {
 });
 
 // Route to add a new product
-app.post("/api/products", async (req, res) => {
+app.post("/products", async (req, res) => {
   const { productName, quantity, purchasePrice, sellingPrice, receivedDate } = req.body;
 
   try {
@@ -102,7 +102,7 @@ app.post("/api/products", async (req, res) => {
 });
 
 // Route to update product quantity
-app.put("/api/products/:id", async (req, res) => {
+app.put("/products/:id", async (req, res) => {
   const { id } = req.params;
   const { quantity } = req.body;
 
@@ -132,7 +132,7 @@ app.put("/api/products/:id", async (req, res) => {
 });
 
 // Route to sell product (decrease quantity)
-app.put("/api/products/sell/:id", async (req, res) => {
+app.put("/products/sell/:id", async (req, res) => {
   const { id } = req.params;
   const { soldQuantity } = req.body;
 

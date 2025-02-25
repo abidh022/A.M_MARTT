@@ -412,7 +412,7 @@ productForm.addEventListener("submit", function(event) {
   };
 
   // Send a POST request to the server to add the product
-  fetch('/api/products', {
+  fetch('/products', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -445,7 +445,7 @@ function updateProduct(filteredIndex) {
       receivedDate: updateReceivedDate.value  // Optionally, update the received date
     };
 
-    fetch(`/api/products/${filteredProducts[filteredIndex]._id}`, {
+    fetch(`/products/${filteredProducts[filteredIndex]._id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'
@@ -483,7 +483,7 @@ function sellProduct(filteredIndex) {
   if (sellQuantity <= filteredProducts[filteredIndex].quantity) {
     filteredProducts[filteredIndex].quantity -= sellQuantity;  // Update filtered quantity
 
-    fetch(`/api/products/sell/${filteredProducts[filteredIndex]._id}`, {
+    fetch(`/products/sell/${filteredProducts[filteredIndex]._id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'
@@ -518,7 +518,7 @@ function sellProduct(filteredIndex) {
 function deleteProduct(id) {
   const confirmDelete = confirm("Are you sure you want to delete this product?");
   if (confirmDelete) {
-    fetch(`/api/products/${id}`, {
+    fetch(`/products/${id}`, {
       method: 'DELETE'
     })
     .then(response => response.json())
@@ -538,7 +538,7 @@ function deleteProduct(id) {
 }
 async function fetchProducts() {
   try {
-    const response = await fetch('/api/products');
+    const response = await fetch('/products');
     if (!response.ok) { // Handle non-200 status codes
       throw new Error(`HTTP error! status: ${response.status}`);
     }
