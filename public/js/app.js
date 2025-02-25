@@ -539,13 +539,21 @@ function deleteProduct(id) {
 
 async function fetchProducts() {
   try {
-    const response = await fetch('/api/products'); // Wait for the server response
-    const data = await response.json(); // Wait for the response to be parsed as JSON
+    const response = await fetch('/api/products'); // Get the products from the API
+
+    if (!response.ok) { // Check if the response was successful
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json(); // Parse response as JSON
+
+    if (!Array.isArray(data)) {
+      throw new Error("Invalid data format received");
+    }
 
     products = data; // Store products from server
     filteredProducts = data;  // Initially, display all products
-
-    updateTable(filteredProducts); // Display all products initially
+    updateTable(filteredProducts); // Update table with products
   } catch (error) {
     console.error("Error fetching products:", error);
     alert('Failed to fetch products.');
