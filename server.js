@@ -66,7 +66,7 @@ connectToMongo().then(() => {
     }
   });
 
-  app.use(express.static(path.join(__dirname, "../public")));
+  app.use(express.static(path.join(__dirname, "public")));
 
   app.listen(port, () => {
     console.log(`Server Listining at http://localhost:${port}`);
