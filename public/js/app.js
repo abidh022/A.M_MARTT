@@ -598,4 +598,3 @@ searchBar.addEventListener("input", function(event) {
 // Initial table load
 fetchProducts();
 
-module.exports = app;   
