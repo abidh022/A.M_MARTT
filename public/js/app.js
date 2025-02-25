@@ -538,20 +538,20 @@ function deleteProduct(id) {
 }
 async function fetchProducts() {
   try {
-    const response = await fetch('/api/products'); // Make sure this matches the backend route
-    if (!response.ok) { // Handle HTTP errors
+    const response = await fetch('/api/products');
+    if (!response.ok) { // Handle non-200 status codes
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-
-    const data = await response.json(); // Parse the response as JSON
+    const data = await response.json();
     products = data; // Store products from the server
-    filteredProducts = data; // Initially, display all products
-    updateTable(filteredProducts); // Update the table to show all products
+    filteredProducts = data;  // Initially, display all products
+    updateTable(filteredProducts);
   } catch (error) {
     console.error("Error fetching products:", error);
     alert('Failed to fetch products.');
   }
 }
+
 
 
 // Update the table with all or filtered products

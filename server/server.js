@@ -438,13 +438,13 @@ const app = express();
 // MongoDB connection function
 async function connectToMongo() {
   try {
-    await client.connect(); // Connect to MongoDB
-    console.log("Connected to MongoDB!"); // Log success message
-    const db = client.db("inventory"); // Access the 'inventory' database
-    productsCollection = db.collection("stock"); // Reference the 'stock' collection
+    await client.connect();
+    console.log("Connected to MongoDB!");
+    const db = client.db("inventory");
+    productsCollection = db.collection("stock");
   } catch (error) {
-    console.error("Error connecting to MongoDB:", error); // Log any errors
-    throw error; // Rethrow the error if connection fails
+    console.error("Error connecting to MongoDB:", error);
+    throw error;
   }
 }
 
@@ -476,9 +476,10 @@ app.get("/api/products", async (req, res) => {
     res.json(products); // Send the fetched products as JSON
   } catch (error) {
     console.error("Error fetching products:", error);
-    res.status(500).json({ error: "Failed to fetch products" });
+    res.status(500).json({ error: `Failed to fetch products: ${error.message}` });
   }
 });
+
 
 // Set up the Express server to listen on port 5500
 const port = 5500;
